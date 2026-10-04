@@ -1,0 +1,4 @@
+com\example\contractguardian\ContractGuardianApplicationTest.class
+com\example\contractguardian\impact\RiskScoringServiceTest.class
+com\example\contractguardian\api\HashTest.class
+com\example\contractguardian\comparison\ContractDiffEngineTest.class

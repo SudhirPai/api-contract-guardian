@@ -1,0 +1,16 @@
+spring:
+  application.name: api-contract-guardian
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:guardian;MODE=PostgreSQL;DB_CLOSE_DELAY=-1}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    hibernate.ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+guardian:
+  polling-interval-ms: ${POLLING_INTERVAL_MS:900000}
+  demo-enabled: ${DEMO_ENABLED:true}
+management.endpoints.web.exposure.include: health,info
+logging.pattern.level: '%5p [req:%X{requestId:-}]'
