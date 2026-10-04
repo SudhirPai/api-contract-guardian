@@ -1,0 +1,4 @@
+consumerApplication,consumerMethod,consumerPath,consumerFieldPath,producerApiId,producerMethod,producerPath,producerFieldPath,transformation,required
+User App,GET,/profile,$.name,1,GET,/customer,$.customer.user_name,DIRECT,true
+User App,GET,/account-summary,$.name,1,GET,/customer,$.customer.user_name,DIRECT,true
+Payment App,GET,/customer-details,$.customerName,1,GET,/customer,$.customer.user_name,DIRECT,true
