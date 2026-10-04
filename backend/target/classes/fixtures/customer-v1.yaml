@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info: { title: Customer API, version: '1.0' }
+paths:
+  /customer:
+    get:
+      responses:
+        '200':
+          description: Customer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    type: object
+                    required: [ id, user_name ]
+                    properties:
+                      id: { type: string }
+                      user_name: { type: string }
+                      age: { type: integer }

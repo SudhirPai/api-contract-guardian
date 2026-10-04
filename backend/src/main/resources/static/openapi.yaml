@@ -1,0 +1,358 @@
+openapi: 3.0.3
+info:
+  title: API Contract Guardian API
+  version: 1.0.0
+  description: |
+    API for registering upstream OpenAPI contracts, importing consumer mappings,
+    and viewing detected changes and downstream impact.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/apis:
+    get:
+      summary: List monitored APIs
+      responses:
+        '200':
+          description: Monitored APIs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/MonitoredApi'}
+    post:
+      summary: Register an upstream API and store its initial contract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ApiRequest'}
+      responses:
+        '201':
+          description: API registered
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MonitoredApi'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+  /api/apis/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ApiId'
+    get:
+      summary: Get a monitored API
+      responses:
+        '200':
+          description: Monitored API
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MonitoredApi'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    delete:
+      summary: Delete a monitored API
+      responses:
+        '204': {description: API deleted}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /api/apis/{id}/check:
+    parameters:
+      - $ref: '#/components/parameters/ApiId'
+    post:
+      summary: Fetch the upstream contract now and compare it with the latest snapshot
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CheckResult'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /api/apis/{id}/demo/v2:
+    parameters:
+      - $ref: '#/components/parameters/ApiId'
+    post:
+      summary: Switch the seeded demo API to its v2 fixture and run a check
+      responses:
+        '200':
+          description: Demo check completed
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CheckResult'}
+  /api/apis/{id}/contracts:
+    parameters:
+      - $ref: '#/components/parameters/ApiId'
+    get:
+      summary: Get contract snapshot history for an API
+      responses:
+        '200':
+          description: Contract snapshots
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ApiContract'}
+  /api/apis/{id}/changes:
+    parameters:
+      - $ref: '#/components/parameters/ApiId'
+    get:
+      summary: Get changes for the API's current contract
+      responses:
+        '200':
+          description: Contract changes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ContractChange'}
+  /api/apis/{id}/impacts:
+    parameters:
+      - $ref: '#/components/parameters/ApiId'
+    get:
+      summary: Get impacts associated with the API's current changes
+      responses:
+        '200':
+          description: Impacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Impact'}
+  /api/mappings:
+    get:
+      summary: List consumer mappings
+      responses:
+        '200':
+          description: Consumer mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ConsumerMapping'}
+    post:
+      summary: Create one consumer mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/MappingRequest'}
+      responses:
+        '201':
+          description: Mapping created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConsumerMapping'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+  /api/mappings/{id}:
+    parameters:
+      - $ref: '#/components/parameters/MappingId'
+    delete:
+      summary: Delete a consumer mapping
+      responses:
+        '204': {description: Mapping deleted}
+  /api/mappings/import/csv:
+    post:
+      summary: Import mappings from a CSV file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: {type: string, format: binary}
+      responses:
+        '200':
+          description: Import result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ImportResult'}
+  /api/mappings/import/xlsx:
+    post:
+      summary: Import mappings from the first worksheet of an XLSX file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: {type: string, format: binary}
+      responses:
+        '200':
+          description: Import result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ImportResult'}
+  /api/dashboard/summary:
+    get:
+      summary: Get dashboard totals and recent changes
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DashboardSummary'}
+  /api/impacts:
+    get:
+      summary: Get the 50 most recent impacts
+      responses:
+        '200':
+          description: Impacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Impact'}
+  /api/changes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+    get:
+      summary: Get one contract change
+      responses:
+        '200':
+          description: Contract change
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ContractChange'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /actuator/health:
+    get:
+      summary: Spring Boot health check
+      responses:
+        '200': {description: Application health status}
+components:
+  parameters:
+    ApiId:
+      name: id
+      in: path
+      required: true
+      schema: {type: integer, format: int64}
+    MappingId:
+      name: id
+      in: path
+      required: true
+      schema: {type: integer, format: int64}
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+  schemas:
+    ApiRequest:
+      type: object
+      required: [name, application, team, environment, swaggerUrl]
+      properties:
+        name: {type: string, example: Orders API}
+        application: {type: string, example: orders-service}
+        team: {type: string, example: orders-team}
+        environment: {type: string, enum: [DEV, QA, INT, VAL], example: QA}
+        swaggerUrl: {type: string, format: uri, example: 'https://example.com/openapi.yaml'}
+        description: {type: string}
+        pollingEnabled: {type: boolean, default: true}
+    MonitoredApi:
+      allOf:
+        - $ref: '#/components/schemas/ApiRequest'
+        - type: object
+          required: [id, createdAt, updatedAt]
+          properties:
+            id: {type: integer, format: int64}
+            currentContractId: {type: integer, format: int64, nullable: true}
+            createdAt: {type: string, format: date-time}
+            updatedAt: {type: string, format: date-time}
+    CheckResult:
+      type: object
+      properties:
+        changed: {type: boolean}
+        contractId: {type: integer, format: int64}
+        changes: {type: integer, minimum: 0}
+        impacts: {type: integer, minimum: 0}
+        message: {type: string}
+    ApiContract:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        apiId: {type: integer, format: int64}
+        version: {type: string, example: v2}
+        hash: {type: string, description: SHA-256 hash of the raw source document}
+        rawDocument: {type: string}
+        normalizedDocument: {type: string}
+        detectedAt: {type: string, format: date-time}
+    MappingRequest:
+      type: object
+      required: [consumerApplication, consumerMethod, consumerPath, consumerFieldPath, producerApiId, producerMethod, producerPath, producerFieldPath, required]
+      properties:
+        consumerApplication: {type: string}
+        consumerMethod: {type: string, example: GET}
+        consumerPath: {type: string, example: /profile}
+        consumerFieldPath: {type: string, example: '$.name'}
+        producerApiId: {type: integer, format: int64}
+        producerMethod: {type: string, example: GET}
+        producerPath: {type: string, example: /customer}
+        producerFieldPath: {type: string, example: '$.customer.user_name'}
+        transformation: {type: string, nullable: true, example: DIRECT}
+        required: {type: boolean}
+    ConsumerMapping:
+      allOf:
+        - $ref: '#/components/schemas/MappingRequest'
+        - type: object
+          properties:
+            id: {type: integer, format: int64}
+            createdAt: {type: string, format: date-time}
+    ImportResult:
+      type: object
+      properties:
+        imported: {type: integer, minimum: 0}
+        errors:
+          type: array
+          items: {type: string}
+    ContractChange:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        oldContractId: {type: integer, format: int64}
+        newContractId: {type: integer, format: int64}
+        changeType:
+          type: string
+          enum: [ENDPOINT_ADDED, ENDPOINT_REMOVED, RESPONSE_FIELD_ADDED, RESPONSE_FIELD_REMOVED, FIELD_TYPE_CHANGED, REQUIRED_TO_OPTIONAL, OPTIONAL_TO_REQUIRED, NULLABLE_CHANGED, ENUM_CHANGED, FIELD_MOVED, LIKELY_FIELD_RENAME]
+        severity: {type: string, enum: [BREAKING, POTENTIALLY_BREAKING, NON_BREAKING]}
+        endpoint: {type: string, example: 'GET /customer'}
+        jsonPath: {type: string, example: '$.customer.user_name'}
+        oldValue: {type: string, nullable: true}
+        newValue: {type: string, nullable: true}
+        confidence: {type: integer, minimum: 0, maximum: 100}
+        detectedAt: {type: string, format: date-time}
+    Impact:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        contractChangeId: {type: integer, format: int64}
+        mappingId: {type: integer, format: int64}
+        impactLevel: {type: string, enum: [CRITICAL, HIGH, MEDIUM, LOW]}
+        riskScore: {type: integer, minimum: 0, maximum: 100}
+        reason: {type: string}
+        status: {type: string, example: OPEN}
+        detectedAt: {type: string, format: date-time}
+    DashboardSummary:
+      type: object
+      properties:
+        monitoredApis: {type: integer}
+        contracts: {type: integer}
+        highCriticalImpacts: {type: integer}
+        unresolvedImpacts: {type: integer}
+        totalConsumers: {type: integer}
+        recentChanges:
+          type: array
+          items: {$ref: '#/components/schemas/ContractChange'}
+    Error:
+      type: object
+      properties:
+        timestamp: {type: string, format: date-time}
+        status: {type: integer}
+        error: {type: string}
+        message: {type: string}
